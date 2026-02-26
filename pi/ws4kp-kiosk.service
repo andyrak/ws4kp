@@ -1,0 +1,19 @@
+[Unit]
+Description=WeatherStar 4000+ Kiosk Display
+After=ws4kp.service network-online.target
+Wants=ws4kp.service
+
+[Service]
+Type=simple
+User=__USER__
+Environment=DISPLAY=:0
+PAMName=login
+TTYPath=/dev/tty1
+StandardInput=tty
+StandardOutput=journal
+ExecStart=/usr/bin/startx /bin/bash __KIOSK_SCRIPT__ -- -nocursor vt1
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

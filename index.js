@@ -1,5 +1,4 @@
 // express
-// eslint-disable-next-line import/no-extraneous-dependencies
 const express = require('express');
 
 const app = express();
@@ -20,10 +19,41 @@ app.get('/stations/*', corsPassThru);
 app.get('/Conus/*', radarPassThru);
 app.get('/products/*', outlookPassThru);
 
-// route for audio files from env
+// route for audio files: scan local directory or fall back to env var
+const audioDir = process.env.AUDIO_DIR || '';
 const audioFilesString = process.env.AUDIO_FILES ?? '';
+
+// serve local audio files if AUDIO_DIR is configured
+if (audioDir && fs.existsSync(audioDir)) {
+	app.use('/audio/local', express.static(audioDir));
+}
+
 app.get('/audiolisting', (req, res) => {
+	// if a local audio directory is configured, scan it for audio files
+	if (audioDir && fs.existsSync(audioDir)) {
+		const audioExtensions = ['.mp3', '.ogg', '.m4a', '.wav', '.aac', '.flac'];
+		try {
+			const files = fs.readdirSync(audioDir)
+				.filter((f) => audioExtensions.includes(path.extname(f).toLowerCase()))
+				.sort()
+				.map((f) => `/audio/local/${encodeURIComponent(f)}`);
+			res.send(files.join(','));
+			return;
+		} catch (e) {
+			console.error('Error scanning audio directory:', e.message);
+		}
+	}
+	// fall back to AUDIO_FILES env var (cloud URLs)
 	res.send(audioFilesString);
+});
+
+// kiosk mode configuration
+const kioskZip = process.env.KIOSK_ZIPCODE || '';
+app.get('/kiosk-config', (req, res) => {
+	res.json({
+		enabled: process.env.KIOSK_MODE === '1',
+		zipCode: kioskZip,
+	});
 });
 
 // version

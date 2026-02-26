@@ -24,7 +24,7 @@ const TXT_ADDRESS_SELECTOR = '#txtAddress';
 const TOGGLE_FULL_SCREEN_SELECTOR = '#ToggleFullScreen';
 const BNT_GET_GPS_SELECTOR = '#btnGetGps';
 
-const init = () => {
+const init = async () => {
 	document.querySelector(TXT_ADDRESS_SELECTOR).addEventListener('focus', (e) => {
 		e.target.select();
 	});
@@ -83,17 +83,56 @@ const init = () => {
 		return false;
 	};
 
-	// Auto load the previous query
-	const query = localStorage.getItem('latLonQuery');
-	const latLon = localStorage.getItem('latLon');
-	const fromGPS = localStorage.getItem('latLonFromGPS');
-	if (query && latLon && !fromGPS) {
-		const txtAddress = document.querySelector(TXT_ADDRESS_SELECTOR);
-		txtAddress.value = query;
-		loadData(JSON.parse(latLon));
-	}
-	if (fromGPS) {
-		btnGetGpsClick();
+	// Check for kiosk mode configuration
+	const kioskAutoStart = async () => {
+		try {
+			const res = await fetch('/kiosk-config');
+			if (!res.ok) return false;
+			const config = await res.json();
+			if (config.enabled && config.zipCode) {
+				const txtAddress = document.querySelector(TXT_ADDRESS_SELECTOR);
+				// check if we already have a location cached
+				const cachedLatLon = localStorage.getItem('latLon');
+				if (cachedLatLon) {
+					txtAddress.value = localStorage.getItem('latLonQuery') || config.zipCode;
+					loadData(JSON.parse(cachedLatLon));
+					return true;
+				}
+				// geocode the zip code
+				txtAddress.value = config.zipCode;
+				const data = await json('https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/find', {
+					data: {
+						text: config.zipCode,
+						f: 'json',
+					},
+				});
+				const loc = data?.locations?.[0];
+				if (loc) {
+					doRedirectToGeometry(loc.feature.geometry);
+					return true;
+				}
+			}
+		} catch (e) {
+			console.error('Kiosk auto-start failed:', e);
+		}
+		return false;
+	};
+
+	const kioskStarted = await kioskAutoStart();
+
+	if (!kioskStarted) {
+		// Auto load the previous query
+		const query = localStorage.getItem('latLonQuery');
+		const latLon = localStorage.getItem('latLon');
+		const fromGPS = localStorage.getItem('latLonFromGPS');
+		if (query && latLon && !fromGPS) {
+			const txtAddress = document.querySelector(TXT_ADDRESS_SELECTOR);
+			txtAddress.value = query;
+			loadData(JSON.parse(latLon));
+		}
+		if (fromGPS) {
+			btnGetGpsClick();
+		}
 	}
 
 	const play = localStorage.getItem('play');

@@ -5,3 +5,6 @@ server/audio/test.mp3
 now.json
 .vercel
 .env
+
+# Local music files (copyright - not included in repo)
+music/
