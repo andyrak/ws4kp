@@ -58,4 +58,9 @@ exec chromium-browser \
     --disable-ipc-flooding-protection \
     --password-store=basic \
     --use-mock-keychain \
-    --enable-features=OverlayScrollbar
+    --enable-features=OverlayScrollbar \
+    --renderer-process-limit=1 \
+    --disable-dev-shm-usage \
+    --js-flags="--max-old-space-size=128" \
+    --disable-smooth-scrolling \
+    --disable-gpu-compositing

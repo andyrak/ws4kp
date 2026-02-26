@@ -3,7 +3,6 @@ import STATUS from './status.mjs';
 import { DateTime } from '../vendor/auto/luxon.mjs';
 import { loadImg } from './utils/image.mjs';
 import { text } from './utils/fetch.mjs';
-import { rewriteUrl } from './utils/cors.mjs';
 import WeatherDisplay from './weatherdisplay.mjs';
 import { registerDisplay, timeZone } from './navigation.mjs';
 import * as utils from './radar-utils.mjs';
@@ -71,7 +70,7 @@ class Radar extends WeatherDisplay {
 		const lists = (await Promise.all(baseUrls.map(async (url) => {
 			try {
 			// get a list of available radars
-				return text(url, { cors: true });
+				return text(url);
 			} catch (error) {
 				console.log('Unable to get list of radars');
 				console.error(error);
@@ -136,7 +135,7 @@ class Radar extends WeatherDisplay {
 			context.imageSmoothingEnabled = false;
 
 			// get the image
-			const response = await fetch(rewriteUrl(url));
+			const response = await fetch(url);
 
 			// test response
 			if (!response.ok) throw new Error(`Unable to fetch radar error ${response.status} ${response.statusText} from ${response.url}`);

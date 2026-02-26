@@ -25,7 +25,10 @@ const fisheryates = (arr) => {
 
 const setupAudio = () => {
 	getAudioFiles().then((data) => {
-		const AUDIO_FILES = fisheryates(data.split(','));
+		if (!data || data.trim() === '') return;
+
+		const AUDIO_FILES = fisheryates(data.split(',').filter((f) => f.trim() !== ''));
+		if (AUDIO_FILES.length === 0) return;
 
 		let index = 0;
 

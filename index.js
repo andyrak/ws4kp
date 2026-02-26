@@ -11,12 +11,10 @@ app.set('view engine', 'ejs');
 // cors pass through
 const fs = require('fs');
 const corsPassThru = require('./cors');
-const radarPassThru = require('./cors/radar');
 const outlookPassThru = require('./cors/outlook');
 
 // cors pass-thru to api.weather.gov
 app.get('/stations/*', corsPassThru);
-app.get('/Conus/*', radarPassThru);
 app.get('/products/*', outlookPassThru);
 
 // route for audio files: scan local directory or fall back to env var
